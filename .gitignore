@@ -1,0 +1,13 @@
+# Personal work stays local
+raw/*
+projects/*
+exports/*
+!raw/.gitkeep
+!projects/.gitkeep
+!exports/.gitkeep
+
+node_modules/
+*.log
+.env
+Thumbs.db
+.DS_Store

@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>reel-sep30 · paper cut</title>
+    <script src="vendor/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Anton"; src: url("fonts/Anton-400.woff2") format("woff2"); }
+      @font-face { font-family: "Caveat"; src: url("fonts/Caveat-700.woff2") format("woff2"); font-weight: 700; }
+      @font-face { font-family: "Special Elite"; src: url("fonts/SpecialElite-400.woff2") format("woff2"); }
+      @font-face { font-family: "Permanent Marker"; src: url("fonts/PermanentMarker-400.woff2") format("woff2"); }
+      :root {
+        --cream: #f6edd8; --cream2: #efe3c6; --kraft: #c9a36b; --kraft2: #b88f57;
+        --ink: #2b241b; --red: #e8442e; --mustard: #f2b53a; --teal: #2f8f83;
+      }
+      body { margin: 0; background: #000; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; }
+      #table { position: absolute; inset: 0; background-color: var(--kraft); background-image: var(--grain); }
+      #photo { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; background-color: #fbf6ea; background-image: var(--grain); transform-origin: 50% 0; }
+      #stage { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; overflow: hidden; transform-origin: 50% 0; }
+      #a-roll { position: absolute; left: 0; top: -12px; width: 1080px; height: 1944px; object-fit: cover; }
+      #overlay, #caps { position: absolute; inset: 0; pointer-events: none; }
+
+      .piece { position: absolute; opacity: 0; filter: drop-shadow(0 6px 0 rgba(0, 0, 0, 0.3)) drop-shadow(0 16px 18px rgba(0, 0, 0, 0.28)); }
+      .sheet { position: absolute; inset: 0; background-color: var(--cream); background-image: var(--grain); }
+      .sheet.kraft { background-color: var(--kraft); }
+      .sheet.red { background-color: var(--red); }
+      .sheet.mustard { background-color: var(--mustard); }
+      .sheet.ink { background-color: var(--ink); }
+      .sheet.teal { background-color: var(--teal); }
+      .content { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-sizing: border-box; padding: 18px 36px; color: var(--ink); }
+      .tape { position: absolute; width: 150px; height: 44px; opacity: 0;
+        background: repeating-linear-gradient(45deg, rgba(242, 181, 58, 0.78) 0 12px, rgba(255, 214, 120, 0.78) 12px 24px); }
+
+      .label { font-family: "Special Elite", monospace; font-size: 30px; letter-spacing: 0.12em; text-transform: uppercase; color: #6b5a3e; }
+      .title { font-family: "Anton", sans-serif; font-size: 92px; line-height: 1.02; text-transform: uppercase; }
+      .note { font-family: "Caveat", cursive; font-weight: 700; font-size: 58px; line-height: 1.05; }
+      .marker { font-family: "Permanent Marker", cursive; }
+      .on-red { color: var(--cream); }
+      .hl { color: var(--red); }
+
+      .ransom { position: absolute; display: flex; flex-wrap: wrap; justify-content: center; gap: 14px 34px; }
+      .ransom .wordgrp { display: flex; gap: 6px; }
+      .ransom .chip { position: relative; opacity: 0; filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.3)); }
+      .ransom .chip .sheet { inset: 0; }
+      .ransom .chip span { position: relative; display: block; padding: 6px 16px 2px; font-family: "Anton", sans-serif; font-size: 120px; line-height: 1; text-transform: uppercase; }
+
+      .cal { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px 12px; width: 100%; }
+      .mon { position: relative; height: 88px; }
+      .mon span { position: relative; display: flex; height: 100%; align-items: center; justify-content: center; font-family: "Anton", sans-serif; font-size: 42px; color: var(--ink); }
+      .cross { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: "Permanent Marker", cursive; color: var(--red); font-size: 92px; line-height: 1; opacity: 0; }
+      .stamp { position: absolute; right: 30px; bottom: 26px; padding: 4px 22px 0; border: 7px solid var(--red); color: var(--red); font-family: "Anton", sans-serif; font-size: 84px; line-height: 1.05; opacity: 0; background: rgba(246, 237, 216, 0.6); }
+
+      .capline { position: absolute; left: 90px; width: 900px; top: 1490px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 12px; opacity: 0; }
+      .word { position: relative; opacity: 0; filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.35)); }
+      .word span { position: relative; display: block; padding: 8px 16px 4px; font-family: "Anton", sans-serif; font-size: 62px; line-height: 1; color: var(--ink); text-transform: uppercase; }
+      .word.key span { color: var(--cream); }
+
+      .tick { font-family: "Permanent Marker", cursive; color: var(--red); font-size: 64px; opacity: 0; }
+      .row { position: relative; display: flex; align-items: center; gap: 18px; width: 100%; height: 64px; }
+      .row .note { font-size: 52px; text-align: left; }
+      .row .tick { font-size: 56px; }
+      .num { font-family: "Anton", sans-serif; font-size: 150px; line-height: 1.1; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1080" data-height="1920" data-duration="199.88">
+      <div id="table"></div>
+      <div id="photo">
+        <div id="stage">
+          <video id="a-roll" class="clip" src="clip.mp4" playsinline data-has-audio="true" data-start="0" data-duration="199.88" data-track-index="0" data-volume="1"></video>
+        </div>
+      </div>
+      <div id="overlay"></div>
+      <div id="caps"></div>
+    </div>
+    <script src="captions.js"></script>
+    <script>
+      // captions.js is generated by tools/build-captions.mjs from captions-src.json + transcript.json
+      const CAPTIONS = window.CAPTIONS;
+
+      // ---------- deterministic helpers ----------
+      function prng(seed) {
+        return function () {
+          seed = (seed + 0x6d2b79f5) | 0;
+          let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+      const R = prng(20260930);
+      const rr = (a, b) => a + (b - a) * R();
+
+      const grainSvg = `<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='7' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.3  0 0 0 0 0.24  0 0 0 0 0.16  0 0 0 0.16 0'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>`;
+      document.documentElement.style.setProperty("--grain", `url("data:image/svg+xml;utf8,${grainSvg.replace(/</g, "%3C").replace(/>/g, "%3E")}")`);
+
+      function torn(jx = 1.4, jy = 5, n = 22) {
+        const p = [], m = Math.max(4, Math.round(n / 3));
+        for (let i = 0; i <= n; i++) p.push([(i / n) * 100, rr(0, jy)]);
+        for (let i = 1; i <= m; i++) p.push([100 - rr(0, jx), (i / m) * 100]);
+        for (let i = 1; i <= n; i++) p.push([100 - (i / n) * 100, 100 - rr(0, jy)]);
+        for (let i = 1; i < m; i++) p.push([rr(0, jx), 100 - (i / m) * 100]);
+        return `polygon(${p.map(([x, y]) => `${x.toFixed(2)}% ${y.toFixed(2)}%`).join(",")})`;
+      }
+      function make(tag, cls, parent, html) {
+        const e = document.createElement(tag);
+        if (cls) e.className = cls;
+        if (html != null) e.innerHTML = html;
+        (parent || document.getElementById("overlay")).appendChild(e);
+        return e;
+      }
+      let uid = 0;
+      function piece({ x, y, w, h, color = "", jag = [1.4, 5], parent }) {
+        const wrap = make("div", "piece", parent);
+        wrap.id = `p${++uid}`;
+        Object.assign(wrap.style, { left: `${x}px`, top: `${y}px`, width: `${w}px`, height: `${h}px` });
+        const sheet = make("div", `sheet ${color}`, wrap);
+        sheet.style.clipPath = torn(jag[0], jag[1]);
+        const content = make("div", "content", wrap);
+        return { wrap, content };
+      }
+      function tape(x, y, rot, w = 150) {
+        const t = make("div", "tape");
+        Object.assign(t.style, { left: `${x - w / 2}px`, top: `${y - 22}px`, width: `${w}px` });
+        t.id = `t${++uid}`;
+        t.dataset.rot = rot;
+        return t;
+      }
+
+      // ---------- stop-motion moves ----------
+      const tl = gsap.timeline({ paused: true });
+      function dropIn(el, t, rot = rr(-3, 3), from = -260) {
+        tl.fromTo(el, { opacity: 0, y: from, rotation: rot - 9 }, { opacity: 1, y: 0, rotation: rot, duration: 0.42, ease: "steps(5)" }, t);
+        return rot;
+      }
+      function slap(el, t, rot = rr(-3, 3)) {
+        tl.fromTo(el, { opacity: 0, scale: 1.3, rotation: rot + 4 }, { opacity: 1, scale: 1, rotation: rot, duration: 0.25, ease: "steps(3)" }, t);
+        return rot;
+      }
+      function slideIn(el, t, dir = -1, rot = rr(-3, 3)) {
+        tl.fromTo(el, { opacity: 1, x: dir * 1100, rotation: rot + dir * 10 }, { x: 0, rotation: rot, duration: 0.5, ease: "steps(6)" }, t);
+        return rot;
+      }
+      function tapeOn(t, at) {
+        const r = +t.dataset.rot;
+        tl.fromTo(t, { opacity: 0, scale: 1.4, rotation: r + 6 }, { opacity: 1, scale: 1, rotation: r, duration: 0.17, ease: "steps(2)" }, at);
+      }
+      function boil(el, t0, t1, rot, amp = 0.8) {
+        const n = Math.floor((t1 - t0) / 0.25);
+        if (n > 0) tl.to(el, { rotation: rot + amp, duration: 0.125, ease: "steps(1)", repeat: n * 2 - 1, yoyo: true }, t0);
+      }
+      function pullOff(el, t, dir = 1) {
+        tl.to(el, { x: dir * 1200, rotation: `+=${dir * 14}`, duration: 0.3, ease: "steps(4)" }, t);
+        tl.set(el, { opacity: 0 }, t + 0.31);
+      }
+
+      // footage becomes a taped polaroid on the kraft table (top half), bottom half free for graphics
+      function reframe(t0, t1) {
+        const photo = document.getElementById("photo"), stage = document.getElementById("stage");
+        tl.to(photo, { scale: 0.5, y: 60, rotation: -2.5, duration: 0.5, ease: "steps(6)" }, t0);
+        tl.to(stage, { scale: 0.92, x: 0, y: 43, transformOrigin: "50% 0%", duration: 0.5, ease: "steps(6)" }, t0);
+        const ta = tape(360, 78, -32, 170), tb = tape(720, 64, 30, 170);
+        tapeOn(ta, t0 + 0.5); tapeOn(tb, t0 + 0.58);
+        tl.to([photo, stage], { scale: 1, x: 0, y: 0, rotation: 0, duration: 0.45, ease: "steps(5)" }, t1);
+        tl.set([ta, tb], { opacity: 0 }, t1);
+      }
+      function headline(t0, t1, { label = "", title, y = 1180, w = 800, h = 250, color = "", dir = 0 }) {
+        const { wrap, content } = piece({ x: (1080 - w) / 2, y, w, h, color });
+        const dark = color === "red" || color === "ink";
+        const plain = title.replace(/<[^>]+>/g, "");
+        const longest = Math.max(...plain.split(" ").map((s) => s.length));
+        const size = Math.min(92, Math.floor((w - 90) / (longest * 0.48)), plain.length > 14 ? 78 : 92);
+        content.innerHTML = (label ? `<div class="label"${dark ? ' style="color:var(--cream2)"' : ""}>${label}</div>` : "") + `<div class="title${dark ? " on-red" : ""}" style="font-size:${size}px">${title}</div>`;
+        const rot = dir ? slideIn(wrap, t0, dir) : dropIn(wrap, t0);
+        const a = tape((1080 - w) / 2 + 90, y + 6, -28), b = tape((1080 + w) / 2 - 90, y + 6, 26);
+        tapeOn(a, t0 + 0.42); tapeOn(b, t0 + 0.5);
+        boil(wrap, t0 + 0.5, t1, rot);
+        [wrap, a, b].forEach((e) => pullOff(e, t1));
+        return wrap;
+      }
+      // bottom-anchored so 1- or 2-line notes both clear the captions
+      function ransom(t0, t1, text, { bottom = 1455, colors = ["", "red", "mustard", "kraft", "ink", "teal"] } = {}) {
+        const row = make("div", "ransom");
+        row.id = `r${++uid}`;
+        const longest = Math.max(...text.split(" ").map((w) => w.length));
+        const size = Math.min(130, Math.floor((940 / longest - 38) / 0.55));
+        Object.assign(row.style, { left: "60px", width: "960px", bottom: `${1920 - bottom}px` });
+        let i = 0;
+        text.split(" ").forEach((word) => {
+          const grp = make("div", "wordgrp", row);
+          [...word].forEach((ch) => {
+            const c = make("div", "chip", grp);
+            const col = colors[Math.floor(R() * colors.length)];
+            make("div", `sheet ${col}`, c).style.clipPath = torn(3, 4, 6);
+            const s = make("span", "", c, ch);
+            s.style.fontSize = `${size}px`;
+            if (col === "red" || col === "ink" || col === "teal") s.style.color = "var(--cream)";
+            if (i % 3 === 1) s.style.fontFamily = "'Permanent Marker', cursive";
+            const r = rr(-8, 8);
+            tl.fromTo(c, { opacity: 0, y: -120, rotation: r - 20 }, { opacity: 1, y: rr(-10, 10), rotation: r, duration: 0.25, ease: "steps(3)" }, t0 + i * 0.06);
+            boil(c, t0 + i * 0.06 + 0.3, t1, r, 1.5);
+            i++;
+          });
+        });
+        pullOff(row, t1, -1);
+        return row;
+      }
+      function calendar(t0, t1, { title, crossAt = t0 + 0.4, instant = false, glowAt = null, stamp = null, y = 1115 }) {
+        const w = 860, h = 330;
+        const { wrap, content } = piece({ x: (1080 - w) / 2, y, w, h, jag: [1.2, 3] });
+        content.style.justifyContent = "flex-start";
+        content.innerHTML = `<div class="label" style="margin:6px 0 14px">${title}</div>`;
+        const grid = make("div", "cal", content);
+        ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].forEach((m, i) => {
+          const c = make("div", "mon", grid);
+          make("div", `sheet ${i >= 9 ? "mustard" : "kraft"}`, c).style.clipPath = torn(3, 5, 6);
+          make("span", "", c, m.toUpperCase());
+          if (i < 9) {
+            const x = make("div", "cross", c, "✕");
+            if (instant) tl.set(x, { opacity: 1 }, t0);
+            else tl.fromTo(x, { opacity: 0, scale: 1.8 }, { opacity: 1, scale: 1, duration: 0.12, ease: "steps(2)" }, crossAt + i * 0.09);
+          } else if (glowAt != null) {
+            tl.fromTo(c, { scale: 1, rotation: 0 }, { scale: 1.18, rotation: rr(-6, 6), duration: 0.17, ease: "steps(2)" }, glowAt + (i - 9) * 0.12);
+          }
+        });
+        const rot = dropIn(wrap, t0);
+        const a = tape((1080 - w) / 2 + 40, y + 10, -38, 150), b = tape((1080 + w) / 2 - 40, y + 10, 36, 150);
+        tapeOn(a, t0 + 0.42); tapeOn(b, t0 + 0.5);
+        if (stamp) {
+          const s = make("div", "stamp", wrap, stamp.text);
+          tl.fromTo(s, { opacity: 0, scale: 1.6, rotation: -4 }, { opacity: 1, scale: 1, rotation: -11, duration: 0.17, ease: "steps(2)" }, stamp.t);
+        }
+        boil(wrap, t0 + 0.5, t1, rot);
+        [wrap, a, b].forEach((e) => pullOff(e, t1));
+      }
+      function punch(t0, t1, scale = 1.15) {
+        const stage = document.getElementById("stage");
+        tl.to(stage, { scale, transformOrigin: "50% 30%", duration: 0.17, ease: "steps(2)" }, t0);
+        tl.to(stage, { scale: 1, duration: 0.17, ease: "steps(2)" }, t1);
+      }
+      function checklist(t1, { title, items, w = 820, bottom = 1460 }) {
+        const h = 100 + items.length * 66;
+        const y = bottom - h;
+        const { wrap, content } = piece({ x: (1080 - w) / 2, y, w, h, jag: [1.2, 3] });
+        content.style.justifyContent = "flex-start";
+        content.style.alignItems = "flex-start";
+        content.innerHTML = `<div class="label" style="margin:6px 0 10px">${title}</div>`;
+        const rot = dropIn(wrap, items[0].t - 0.45);
+        const a = tape((1080 + w) / 2 - 70, y + 6, 24, 170);
+        tapeOn(a, items[0].t - 0.05);
+        items.forEach((it) => {
+          const row = make("div", "row", content);
+          const tick = make("div", "tick", row, "✓");
+          const txt = make("div", "note", row, it.text);
+          tl.fromTo(txt, { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.17, ease: "steps(2)" }, it.t);
+          tl.fromTo(tick, { opacity: 0, scale: 1.8 }, { opacity: 1, scale: 1, duration: 0.17, ease: "steps(2)" }, it.t + 0.08);
+        });
+        boil(wrap, items[0].t, t1, rot);
+        [wrap, a].forEach((e) => pullOff(e, t1));
+      }
+      function counter(t0, t1, { label, from = 0, to, prefix = "", suffix = "", y = 1120, dur = 1.2 }) {
+        const w = 620, h = 300;
+        const { wrap, content } = piece({ x: (1080 - w) / 2, y, w, h, color: "mustard" });
+        content.innerHTML = `<div class="num">${prefix}<span>${from}</span>${suffix}</div><div class="label" style="color:var(--ink);margin-top:14px">${label}</div>`;
+        const span = content.querySelector(".num span");
+        const rot = slap(wrap, t0);
+        const o = { v: from };
+        tl.to(o, { v: to, duration: dur, ease: `steps(${Math.min(12, Math.abs(to - from))})`, onUpdate: () => { span.textContent = Math.round(o.v).toLocaleString("en-US"); } }, t0 + 0.2);
+        const a = tape(1080 / 2, y + 2, 3, 200);
+        tapeOn(a, t0 + 0.25);
+        boil(wrap, t0 + 0.3, t1, rot);
+        [wrap, a].forEach((e) => pullOff(e, t1));
+      }
+      function versus(t0, t1, { left, right, y = 1130 }) {
+        const w = 400, h = 260;
+        const L = piece({ x: 90, y, w, h, color: "kraft" }), Rt = piece({ x: 590, y: y + 20, w, h, color: "red" });
+        L.content.innerHTML = `<div class="label" style="color:var(--ink)">${left[0]}</div><div class="title" style="font-size:70px">${left[1]}</div>`;
+        Rt.content.innerHTML = `<div class="label" style="color:var(--cream)">${right[0]}</div><div class="title on-red" style="font-size:70px">${right[1]}</div>`;
+        const r1 = slideIn(L.wrap, t0, -1), r2 = slideIn(Rt.wrap, right[2] ?? t0 + 0.6, 1);
+        const vs = make("div", "piece");
+        Object.assign(vs.style, { left: "480px", top: `${y + 85}px`, width: "120px", height: "110px" });
+        make("div", "sheet ink", vs).style.clipPath = torn(4, 8, 8);
+        make("div", "content", vs, `<div class="marker" style="color:var(--mustard);font-size:56px">VS</div>`);
+        slap(vs, (right[2] ?? t0 + 0.6) + 0.35, -6);
+        boil(L.wrap, t0 + 0.5, t1, r1); boil(Rt.wrap, (right[2] ?? t0 + 0.6) + 0.5, t1, r2);
+        [L.wrap, Rt.wrap, vs].forEach((e, i) => pullOff(e, t1, i ? 1 : -1));
+      }
+
+      // ---------- captions ----------
+      const caps = document.getElementById("caps");
+      CAPTIONS.forEach((c, i) => {
+        const line = make("div", "capline", caps);
+        line.id = `cap${i}`;
+        const words = c.text.split(/\s+/);
+        const keys = (c.key || []).map((k) => k.toLowerCase());
+        const step = Math.min(0.2, ((c.e - c.s) * 0.65) / words.length);
+        tl.set(line, { opacity: 1 }, c.s);
+        words.forEach((w, j) => {
+          const isKey = keys.includes(w.toLowerCase().replace(/[^\p{L}\p{N}]/gu, ""));
+          const chip = make("div", `word${isKey ? " key" : ""}`, line);
+          const sh = make("div", `sheet${isKey ? " red" : ""}`, chip);
+          sh.style.clipPath = torn(2.5, 7, 10);
+          make("span", "", chip, w);
+          const r = rr(-3.5, 3.5);
+          tl.fromTo(chip, { opacity: 0, y: -40, rotation: r - 8 }, { opacity: 1, y: 0, rotation: r, duration: 0.17, ease: "steps(2)" }, c.s + j * step);
+        });
+        tl.set(line, { opacity: 0 }, c.e);
+      });
+
+      // ---------- graphics (planned from transcript) ----------
+      // EXAMPLE calls from reel-sep30: replace with the new video's moments; set data-duration on #root and #a-roll.
+      // nothing before 3 s (hook); every start is the spoken word's time from transcript.json
+      calendar(6.72, 14.55, { title: "2026 · 9 maah guzar gaye", crossAt: 7.12, stamp: { t: 13.97, text: "WASTED" } });
+      calendar(19.41, 20.95, { title: "sirf 3 maah baaqi", instant: true, glowAt: 19.65 });
+      ransom(21.01, 23.05, "START NOW");
+      checklist(33.2, { title: "aap ke paas", items: [{ t: 23.57, text: "Resources" }, { t: 24.37, text: "Tools" }, { t: 25.09, text: "Each & everything" }, { t: 29.23, text: "Dimagh" }] });
+      headline(34.27, 38.5, { label: "pooch nahi raha", title: `bata raha <span class="hl">hoon</span>` });
+      headline(43.52, 46.6, { label: "start nahi kar rahe", title: "Implementation", color: "red" });
+
+      reframe(46.8, 55.6);
+      ransom(47.28, 51.3, "YOU WILL REGRET");
+      headline(51.52, 55.5, { label: "dreams change · phir", title: `<span class="hl">pain</span> feel hoga` });
+
+      counter(57.81, 63.3, { label: "days challenge", to: 90, dur: 1.0 });
+      checklist(75.5, { title: "the plan", items: [{ t: 66.37, text: "Master karo" }, { t: 67.17, text: "Implement karo" }, { t: 69.02, text: "3 din: finalize" }, { t: 72.78, text: "Focus: implementation" }] });
+      versus(76.78, 79.9, { left: ["not about", "Perfect"], right: ["or", "Imperfect", 77.58] });
+      ransom(82.86, 85.5, "JUST START");
+
+      reframe(86.9, 95.6);
+      headline(87.22, 90.55, { label: "phir New Year par", title: `10 din ka <span class="hl">regret</span>` });
+      ransom(90.66, 95.5, "SAAL WASTE");
+
+      headline(103.85, 107.9, { label: "no implementation?", title: "community se out", color: "ink" });
+      checklist(122.2, { title: "choose your path", items: [{ t: 113.36, text: "Monetization" }, { t: 114.64, text: "Digital products" }, { t: 116.16, text: "SaaS tools & dev" }, { t: 117.76, text: "Freelancing" }] });
+      ransom(122.4, 124.6, "CHOOSE NOW");
+      punch(126.99, 130.4);
+      ransom(126.99, 130.5, "NOT SPECIAL");
+      counter(140.85, 144.4, { label: "hours a day", to: 16, dur: 1.0 });
+      versus(151.25, 154.85, { left: ["pehle", "Hard work"], right: ["phir", "Smart work", 152.77] });
+      checklist(161.2, { title: "ab yeh karo", items: [{ t: 155.39, text: "Struggle mein daalo" }, { t: 156.51, text: "Difficulty face karo" }, { t: 158.43, text: "Goal define karo" }, { t: 159.47, text: "Distraction khatam" }] });
+      headline(164.35, 167.2, { label: "aap ka farz", title: "responsibilities" });
+
+      reframe(178.9, 184.3);
+      ransom(179.25, 181.2, "HARD WORK");
+      headline(181.36, 184.2, { label: "distraction khatam", title: `abhi ke <span class="hl">abhi</span>` });
+
+      headline(186.4, 190.9, { label: "New Year par", title: `ek aur <span class="hl">video</span>` });
+      headline(194.41, 197.5, { label: "main poochunga", title: "kis ne implement kiya?" });
+      ransom(197.61, 199.5, "RESULTS?");
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
