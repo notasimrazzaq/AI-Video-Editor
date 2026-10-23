@@ -50,13 +50,13 @@ if ($Video) {
     } else {
         Write-Host "Converting to constant-frame-rate H.264 MP4 (phone footage is often variable frame rate)..."
         $fps = $parts[1]
-        ffmpeg -v error -stats -y -i "$videoPath" -c:v libx264 -crf 16 -preset medium -pix_fmt yuv420p -r $fps -c:a aac -b:a 192k -movflags +faststart "$clip"
+        ffmpeg -nostdin -v error -stats -y -i "$videoPath" -c:v libx264 -crf 16 -preset medium -pix_fmt yuv420p -r $fps -c:a aac -b:a 192k -movflags +faststart "$clip"
         if ($LASTEXITCODE -ne 0) { throw "ffmpeg conversion failed." }
     }
 
     $meta = ffprobe -v error -select_streams v:0 -show_entries stream=width,height,r_frame_rate -show_entries format=duration -of json "$clip"
     [IO.File]::WriteAllText((Join-Path $proj "metadata.json"), ($meta -join "`n"), (New-Object Text.UTF8Encoding $false))
-    ffmpeg -v error -y -i "$clip" -vn -acodec libmp3lame -q:a 2 (Join-Path $proj "audio.mp3")
+    ffmpeg -nostdin -v error -y -i "$clip" -vn -acodec libmp3lame -q:a 2 (Join-Path $proj "audio.mp3")
 
     if ($Transcribe) {
         & (Join-Path $PSScriptRoot "transcribe-deepgram.ps1") -Project $proj -Language $Language

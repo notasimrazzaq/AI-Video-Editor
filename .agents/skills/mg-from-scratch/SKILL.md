@@ -11,8 +11,8 @@ Mechanics: load `hyperframes-core` + `hyperframes-animation`. Upstream routes th
 
 ## Setup
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\new-project.ps1 -Name "<name>"                      # text / product
-powershell -ExecutionPolicy Bypass -File .\tools\new-project.ps1 -Name "<name>" -Screenshots "<dir>"  # SaaS promo
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/new-project.ps1 -Name "<name>"                      # text / product
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/new-project.ps1 -Name "<name>" -Screenshots "<dir>"  # SaaS promo
 ```
 Product photo → copy it to `projects/<name>/product.png`. Then work in `projects/<name>/`.
 Style: ask if not given, then apply the block from `mg-styles`. Without a style: clean white frosted cards on a soft light gradient, Inter.

@@ -11,13 +11,13 @@ Workspace layer on top of the installed HyperFrames skills. For HTML/timeline me
 upstream route is `talking-head-recut`. This skill adds the creator's house rules, which win on conflict.
 
 ## Fast path (proven on reel-sep30, 3:20 Urdu/English reel, Paper Cut)
-1. `new-project.ps1 -Name <n> -Video raw\<file> -Transcribe` → Deepgram transcript in seconds.
+1. `powershell -NoProfile -ExecutionPolicy Bypass -File tools/new-project.ps1 -Name <n> -Video raw/<file> -Transcribe` → Deepgram transcript in seconds.
 2. Dump `transcript-words.txt` (index:text@start) → read it, summarise, pick moments.
 3. Captions: `captions-src.json` (Roman Hinglish chunks by word index) → `node tools/build-captions.mjs projects/<n>`.
 4. Style template: copy `kit/templates/paper-cut-vertical.html` → `index.html`; set both `data-duration`s; replace the EXAMPLE calls with this video's moments.
 5. `lint` → `snapshot --at ...` (2 batches of ~12 frames) → view contact sheets → fix.
 6. Sounds: write `sfx.json` from the offsets table in `mg-sound` → `node tools/sfx.mjs projects/<n>` (BEFORE rendering, so one render includes them).
-7. Tell the user the render time up front (see `mg-export`: ~25–30 min per minute of 1080x1920 video on this PC), then render once, copy to `exports/`.
+7. Tell the user the render time up front (see `mg-export`: ~25–30 min per minute of 1080x1920 video on a 4-core laptop), then render once, copy to `exports/`.
 8. Later tweaks: audio-only → `sfx.mjs --mix` (seconds, no re-render). Visual tweaks → snapshot first, then one re-render.
 
 Don't: install local speech models, resume stalled downloads, render to "check" anything (use snapshots), or preview in VS Code's player (no AAC audio — use VLC).
@@ -26,9 +26,9 @@ Don't: install local speech models, resume stalled downloads, render to "check" 
 1. If the video isn't in `raw/`, it can stay where it is. Pick a short kebab-case project name from the file name.
 2. Run (from the workspace root):
    ```powershell
-   powershell -ExecutionPolicy Bypass -File .\tools\new-project.ps1 -Name "<name>" -Video "<path>" -Transcribe
+   powershell -NoProfile -ExecutionPolicy Bypass -File tools/new-project.ps1 -Name "<name>" -Video "<path>" -Transcribe
    ```
-   - Transcription uses **Deepgram** (`nova-3`, `language=multi` by default: handles Urdu/Hindi + English code-switching; Hindi/Urdu words may come back in Devanagari — romanise to Hinglish, keep timings). Needs the user env var `DEEPGRAM_API_KEY`; if missing, ask the user to set it themselves (never in chat). English-only video: `-Language en`. Re-run alone: `.\tools\transcribe-deepgram.ps1 -Project projects\<name>`.
+   - Transcription uses **Deepgram** (`nova-3`, `language=multi` by default: handles Urdu/Hindi + English code-switching; Hindi/Urdu words may come back in Devanagari — romanise to Hinglish, keep timings). Needs the user env var `DEEPGRAM_API_KEY`; if missing, ask the user to run `powershell -NoProfile -ExecutionPolicy Bypass -File tools/set-deepgram-key.ps1` themselves (never in chat). English-only video: `-Language en`. Re-run alone: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/transcribe-deepgram.ps1 -Project projects/<name>`.
    - **Don't use `npx hyperframes transcribe` with whisper or install it (too loud/slow); use Deepgram.**
    - Gives `projects/<name>/` with `clip.mp4` (CFR H.264), `audio.mp3`, `metadata.json`, `transcript.json`, `fonts/`, `sfx/`, `renders/`.
    - Add `-Screenshots "<folder>"` if the user supplies screenshots for a moment.
@@ -45,7 +45,7 @@ Don't: install local speech models, resume stalled downloads, render to "check" 
   Urdu/Hindi/Hinglish speech → write the text in **Roman Hinglish** (e.g. "ke 9 maah guzar gaye hain"), keep English words as spoken, fix mishearings by context ("नौ मां" → 9 maah, "New York" → New Year).
 - Build: `node tools/build-captions.mjs projects/<name>` → `captions.js` (`window.CAPTIONS = [{s,e,text,key}]`), warns about uncovered words. Load with `<script src="captions.js">`.
 - Find where the face is: `npx hyperframes snapshot` is not available before a composition exists, so extract frames:
-  `ffmpeg -v error -ss <t> -i clip.mp4 -frames:v 1 renders/_probe_<t>.png` at 3–4 points and view them.
+  `ffmpeg -nostdin -v error -ss <t> -i clip.mp4 -frames:v 1 renders/_probe_<t>.png` at 3–4 points and view them.
 - Write a one-paragraph summary: what the video is about, and the 3–8 moments that matter (numbers, lists, before/after, key claim, CTA).
 - Ask the user which style if they didn't say (see `mg-styles`). Default: clean white frosted cards (Liquid Glass).
 
@@ -70,7 +70,7 @@ Moves vocabulary and styles live in the `mg-styles` skill.
    Low-res phone footage (e.g. 480x864 WhatsApp): still author on a 1080x1920 canvas so graphics/captions stay sharp; the video scales up underneath.
 2. `npx hyperframes lint` then `npx hyperframes check` — fix every error.
 3. `npx hyperframes snapshot --at <t1>,<t2>,...` at each graphic's mid-point and **view the PNGs** — check face/caption overlap and text clipping.
-4. Render a draft: `npx hyperframes render . -o renders/with-cards.mp4` (this PC is a 4-core i3: expect slow renders; use snapshots to iterate, render only when the frames look right).
+4. Render a draft: `npx hyperframes render . -o renders/with-cards.mp4` (renders are slow on typical PCs; use snapshots to iterate, render only when the frames look right).
 5. Copy the approved final to `exports/<name>.mp4`.
 
 ## 6. Follow-ups (same session)

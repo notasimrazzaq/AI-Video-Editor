@@ -60,7 +60,7 @@ console.log(`index.html: ${events.length} sound effects`);
 if (flag === "--mix") {
   if (!inFile || !outFile) throw new Error("--mix needs in.mp4 and out.mp4");
   const names = [...new Set(events.map((e) => e.name))];
-  const args = ["-v", "error", "-stats", "-y", "-i", inFile];
+  const args = ["-nostdin", "-v", "error", "-stats", "-y", "-i", inFile];
   names.forEach((n) => args.push("-i", join(dir, "sfx", `${n}.wav`)));
   const parts = [];
   const labels = [];

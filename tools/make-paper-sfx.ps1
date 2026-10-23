@@ -36,11 +36,11 @@ foreach ($name in $sounds.Keys) {
     $tmp = Join-Path $env:TEMP "$name.raw.wav"
     $dest = Join-Path $out "$name.wav"
     # headroom first: volumedetect clamps at 0 dB, so hot float peaks would be under-measured
-    ffmpeg -v error -y -filter_complex "$($sounds[$name]),volume=-12dB" -ac 1 -c:a pcm_f32le $tmp
+    ffmpeg -nostdin -v error -y -filter_complex "$($sounds[$name]),volume=-12dB" -ac 1 -c:a pcm_f32le $tmp
     if ($LASTEXITCODE -ne 0) { throw "ffmpeg failed for $name" }
-    $max = (cmd /c "ffmpeg -hide_banner -i `"$tmp`" -af volumedetect -f null NUL 2>&1" | Select-String "max_volume: (-?[\d.]+)").Matches[0].Groups[1].Value
+    $max = (cmd /c "ffmpeg -nostdin -hide_banner -i `"$tmp`" -af volumedetect -f null NUL 2>&1" | Select-String "max_volume: (-?[\d.]+)").Matches[0].Groups[1].Value
     $gain = -1 - [double]$max
-    ffmpeg -v error -y -i $tmp -af "volume=${gain}dB" -c:a pcm_s16le $dest
+    ffmpeg -nostdin -v error -y -i $tmp -af "volume=${gain}dB" -c:a pcm_s16le $dest
     Remove-Item $tmp
     Write-Host ("{0,-16} peak {1,6} dB -> -1 dB" -f $name, $max)
 }

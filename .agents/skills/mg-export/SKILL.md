@@ -19,7 +19,7 @@ npx hyperframes render . --format png-sequence -o renders/frames
 npx hyperframes render . --crf 23 -o renders/smaller.mp4               # smaller file
 ```
 - When graphics sit on the user's footage, keep the footage fps unless the user asks otherwise.
-- This PC is a 4-core i3 with ~12 GB RAM. Measured: 6 s of simple 1080p graphics ≈ 24 s; **3:20 of 1080x1920 footage + Paper Cut ≈ 1.5 h** (~1.1 fps: `filter: drop-shadow` forces screenshot capture, and fast capture only works on macOS anyway). Warn the user before long renders and render once at the end.
+- Reference timings on a 4-core i3 laptop with ~12 GB RAM (faster PCs are quicker): 6 s of simple 1080p graphics ≈ 24 s; **3:20 of 1080x1920 footage + Paper Cut ≈ 1.5 h** (~1.1 fps: `filter: drop-shadow` forces screenshot capture, and fast capture only works on macOS anyway). Warn the user before long renders and render once at the end.
 - Speed levers: `--workers 3` (each Chrome ~256 MB; default `auto` picked 1 here — test on a short clip first), `--quality draft` for review renders, or a shorter clip. If a render runs out of memory or times out, add `--low-memory-mode` and/or `--protocol-timeout 600000`.
 - Audio-only changes never need a re-render: `node tools/sfx.mjs projects/<n> --mix in.mp4 out.mp4` (video stream copied).
 - Iterate with `npx hyperframes snapshot` (fast) and render only when frames look right.
